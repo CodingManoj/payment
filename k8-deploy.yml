@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment
+  labels:
+    app: payment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment 
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      containers:
+      - name: payment
+        image: 355449129696.dkr.ecr.us-east-1.amazonaws.com/payment:VERSION
+        ports:
+        - containerPort: 8080
+        envFrom: 
+          - configMapRef: 
+              name: payment-cm 
+
+--- 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-cm
+data:
+  CART_HOST: cart-service 
+  CART_PORT: "8080"
+  USER_HOST: user-service 
+  USER_PORT: "8080"
+  AMQP_HOST: rabbitmq-dev.roboshop.internal
+  AMQP_USER: roboshop 
+  AMQP_PASS: roboshop123
+
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+spec:
+  selector:
+    app: payment
+  ports:
+  - name: rabitmq-port
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
